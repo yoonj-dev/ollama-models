@@ -1,4 +1,4 @@
-# Ollama Models Studio 🦙✨
+# Local Model Studio (local-model) 🦙✨
 
 로컬 **Ollama 모델**, 커스텀 **Modelfile**, **Ollama 연동 설정(`config.json`)**, 그리고 **Hermes Agent 설정(`config.yaml`)**을 종합적으로 관리하고 한눈에 조망할 수 있는 인터랙티브 웹 UI 대시보드 도구입니다.
 
@@ -46,9 +46,15 @@
 
 ### 간편 실행
 ```bash
+cd /Users/yoonj/workspace/local-model
 ./run.sh
 ```
 브라우저가 자동으로 열리며 `http://localhost:3400`에 접속됩니다.
+
+### 단독 정적 HTML 대시보드 열기 (서버 불필요)
+```bash
+open /Users/yoonj/workspace/local-model/models_dashboard.html
+```
 
 ### 수동 실행
 ```bash

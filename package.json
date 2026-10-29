@@ -1,7 +1,7 @@
 {
-  "name": "ollama-models-manager",
+  "name": "local-model",
   "version": "1.0.0",
-  "description": "Interactive Web UI & Management Dashboard for Ollama Models, Custom Modelfiles & Integrations",
+  "description": "Interactive Web UI & Management Dashboard for Local Models (Ollama, Custom Modelfiles & Hermes Integrations)",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3400",
