@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Ollama & Hermes Models Studio | Ecosystem Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.3);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.5);
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200 dark:bg-[#090d16] dark:text-slate-100">
+
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors dark:border-slate-800 dark:bg-[#090d16]/90">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center space-x-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 shadow-md shadow-indigo-500/20 text-white">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-base font-bold tracking-tight text-slate-900 dark:text-white sm:text-lg">
+              Ollama Models Studio
+            </h1>
+            <span class="rounded-md border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[11px] font-medium text-indigo-700 dark:border-indigo-800/60 dark:bg-indigo-950/40 dark:text-indigo-300">
+              Ecosystem
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Local Ollama Models × Hermes Agent Multi-Role Topology
+          </p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden md:flex items-center space-x-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 dark:border-slate-800 dark:bg-slate-900/60">
+        <button onclick="switchTab('topology')" id="tab-btn-topology" class="tab-btn flex items-center space-x-2 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all bg-white text-indigo-600 shadow-xs dark:bg-slate-800 dark:text-indigo-400">
+          <span>🌐 토폴로지 맵</span>
+        </button>
+        <button onclick="switchTab('modelfiles')" id="tab-btn-modelfiles" class="tab-btn flex items-center space-x-2 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+          <span>📁 커스텀 Modelfiles (4)</span>
+        </button>
+        <button onclick="switchTab('configs')" id="tab-btn-configs" class="tab-btn flex items-center space-x-2 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+          <span>⚙️ 에이전트 설정 분석</span>
+        </button>
+        <button onclick="switchTab('cli')" id="tab-btn-cli" class="tab-btn flex items-center space-x-2 rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+          <span>💻 CLI 치트시트</span>
+        </button>
+      </nav>
+
+      <!-- Right Header Actions (Theme & Context Menu) -->
+      <div class="flex items-center space-x-2">
+        <button onclick="toggleTheme()" class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800" title="테마 전환">
+          <span id="theme-icon">🌙</span>
+        </button>
+
+        <div class="relative">
+          <button data-brand-context-menu="true" onclick="toggleMenu()" class="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
+            ⋯
+          </button>
+          
+          <div id="context-menu" class="hidden absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 shadow-xl dark:border-slate-800 dark:bg-slate-900 z-50">
+            <div class="p-1">
+              <p class="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                서포트 & 생태계
+              </p>
+              <a href="https://brand-ui.on-tap.xyz/donate" target="_blank" rel="noopener noreferrer" class="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30">
+                <span>🍺 Buy me a beer (후원하기)</span>
+                <span class="text-[10px] opacity-60">↗</span>
+              </a>
+              <a href="https://dev.on-tap.xyz" target="_blank" rel="noopener noreferrer" class="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800">
+                <span>🚀 개발자 페이지 (On Tap)</span>
+                <span class="text-[10px] opacity-60">↗</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+
+    <!-- TAB 1: ECOSYSTEM TOPOLOGY -->
+    <section id="pane-topology" class="tab-pane space-y-6">
+      
+      <!-- Hero Banner -->
+      <div class="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-purple-50/50 p-6 dark:border-indigo-950/40 dark:from-indigo-950/20 dark:via-slate-900/40 dark:to-purple-950/20">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <span class="rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300">
+              Architecture Overview
+            </span>
+            <h2 class="mt-2 text-xl font-bold text-slate-900 dark:text-white">
+              Gemma4 26B 로컬 멀티 모델 에코시스템 토폴로지
+            </h2>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
+              단일 16 GB 기본 가중치(<code>gemma4:26b-a4b</code>)를 기반으로 특화된 4종의 커스텀 Modelfile이 빌드되어,
+              Hermes 자율 에이전트의 마스터 오케스트레이션 및 서브에이전트 델리게이션(코딩, 시스템 자동화, 데일리)으로 완벽하게 바인딩됩니다.
+            </p>
+          </div>
+          <div class="flex flex-col sm:items-end gap-1.5 text-xs font-mono">
+            <span class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-slate-700 shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+              Base: <strong class="text-indigo-600 dark:text-indigo-400">gemma4:26b-a4b (16 GB)</strong>
+            </span>
+            <span class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+              Context: <strong>65,536 tokens (64K)</strong>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Role Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Card 1: Agent -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-indigo-400 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-lg">
+                🤖
+              </div>
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Master Orchestrator</span>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">gemma4-agent:latest</h3>
+              </div>
+            </div>
+            <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+              Hermes Default
+            </span>
+          </div>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            자율형 에이전트 마스터. 도구 호출(Tool-use), JSON 스키마 검증, 그리고 작업 단계별(ANALYSIS, PLAN, IMPLEMENT, TEST) 실행 계획 수립 및 총괄 라우팅.
+          </p>
+          <div class="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2.5 text-center font-mono text-[11px] dark:bg-slate-950/60">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Context</span>
+              <strong class="text-slate-800 dark:text-slate-200">65,536</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Temp</span>
+              <strong class="text-slate-800 dark:text-slate-200">0.2</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Source</span>
+              <span class="text-indigo-600 dark:text-indigo-400">Modelfile.agent</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Coding -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-emerald-400 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-lg">
+                💻
+              </div>
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Lead Software Engineer</span>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">gemma4-coding:latest</h3>
+              </div>
+            </div>
+            <span class="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+              Delegation Route: coding
+            </span>
+          </div>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            TypeScript, React, Next.js, Python, Flutter, C/C++ 풀스택 전문 엔지니어. 리팩토링, 버그 수정, 단위 테스트 및 아키텍처 설계 코드 즉각 산출.
+          </p>
+          <div class="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2.5 text-center font-mono text-[11px] dark:bg-slate-950/60">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Context</span>
+              <strong class="text-slate-800 dark:text-slate-200">65,536</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Temp</span>
+              <strong class="text-slate-800 dark:text-slate-200">0.2</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Source</span>
+              <span class="text-emerald-600 dark:text-emerald-400">Modelfile.coding</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Computer -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-amber-400 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 font-bold text-lg">
+                ⚡
+              </div>
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">System & Terminal Control</span>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">gemma4-computer:latest</h3>
+              </div>
+            </div>
+            <span class="rounded-full bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+              Delegation Route: computer
+            </span>
+          </div>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            macOS/Linux 시스템 제어, 쉘 스크립트 실행, CLI 자동화 및 멀티모달 CUA 실행 엔진. 결정론적(temperature 0.0) 단일 실행 페이로드 출력.
+          </p>
+          <div class="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2.5 text-center font-mono text-[11px] dark:bg-slate-950/60">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Context</span>
+              <strong class="text-slate-800 dark:text-slate-200">65,536</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Temp</span>
+              <strong class="text-slate-800 dark:text-slate-200">0.0 (Zero)</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Source</span>
+              <span class="text-amber-600 dark:text-amber-400">Modelfile.computer</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Daily -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 font-bold text-lg">
+                📝
+              </div>
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Korean Text & Financial Analyst</span>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white">gemma4-daily:latest</h3>
+              </div>
+            </div>
+            <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+              Delegation Route: daily
+            </span>
+          </div>
+          <p class="mt-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            한국어 기술/투자 데이터 분석, 번역, 신속한 텍스트 요약 및 보고서 작성. 사실(Raw Data) 기반의 객관적 서술 및 호흡이 짧은 명사형 어미 정리.
+          </p>
+          <div class="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-slate-50 p-2.5 text-center font-mono text-[11px] dark:bg-slate-950/60">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Context</span>
+              <strong class="text-slate-800 dark:text-slate-200">65,536</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Temp</span>
+              <strong class="text-slate-800 dark:text-slate-200">0.5</strong>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block font-sans">Source</span>
+              <span class="text-blue-600 dark:text-blue-400">Modelfile.daily</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 2: CUSTOM MODELFILES VIEWER -->
+    <section id="pane-modelfiles" class="tab-pane hidden space-y-4">
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-2">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+              커스텀 Modelfiles 소스 뷰어 (~/.ollama/custom_modelfiles/)
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              원클릭으로 각 Modelfile 원문과 하이퍼파라미터를 확인하고 복사할 수 있습니다.
+            </p>
+          </div>
+          <!-- File Selector Pills -->
+          <div class="flex flex-wrap gap-1">
+            <button onclick="showFile('agent')" id="btn-file-agent" class="file-pill rounded-lg px-3 py-1 font-mono text-xs font-medium bg-indigo-600 text-white">
+              Modelfile.agent
+            </button>
+            <button onclick="showFile('coding')" id="btn-file-coding" class="file-pill rounded-lg px-3 py-1 font-mono text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+              Modelfile.coding
+            </button>
+            <button onclick="showFile('computer')" id="btn-file-computer" class="file-pill rounded-lg px-3 py-1 font-mono text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+              Modelfile.computer
+            </button>
+            <button onclick="showFile('daily')" id="btn-file-daily" class="file-pill rounded-lg px-3 py-1 font-mono text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+              Modelfile.daily
+            </button>
+            <button onclick="showFile('sh')" id="btn-file-sh" class="file-pill rounded-lg px-3 py-1 font-mono text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+              build_models.sh
+            </button>
+          </div>
+        </div>
+
+        <!-- Code Content Area -->
+        <div class="mt-4 relative">
+          <button onclick="copyCurrentCode()" class="absolute top-3 right-3 rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-all">
+            <span id="copy-text">📋 복사</span>
+          </button>
+          <pre id="code-display" class="h-[450px] overflow-y-auto rounded-xl bg-[#070b12] p-4 font-mono text-xs leading-relaxed text-emerald-400 border border-slate-800"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: CONFIGS VIEWER -->
+    <section id="pane-configs" class="tab-pane hidden space-y-4">
+      
+      <!-- Hermes config.yaml Analysis -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <span class="rounded bg-indigo-50 px-2 py-0.5 font-mono text-xs font-bold text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+              ~/.hermes/config.yaml
+            </span>
+            <h3 class="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+              Hermes Agent Delegation 라우팅 매핑
+            </h3>
+          </div>
+          <span class="text-xs text-slate-400 font-mono">Backend: model_map</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead>
+              <tr class="border-b border-slate-200 text-slate-400 dark:border-slate-800">
+                <th class="pb-2.5 font-semibold">Route Option</th>
+                <th class="pb-2.5 font-semibold">바인딩된 Ollama 모델</th>
+                <th class="pb-2.5 font-semibold">Provider</th>
+                <th class="pb-2.5 font-semibold">역할 설명</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                <td class="py-3 font-bold text-emerald-600 dark:text-emerald-400">
+                  coding <span class="ml-1 rounded bg-emerald-100 px-1 py-0.2 text-[9px] text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">default</span>
+                </td>
+                <td class="py-3 font-bold text-slate-900 dark:text-white">gemma4-coding:latest</td>
+                <td class="py-3 text-slate-400">ollama-launch</td>
+                <td class="py-3 font-sans text-slate-600 dark:text-slate-300">코드 작성, 리팩토링, 버그 수정, 단위 테스트, 아키텍처 분석 전담</td>
+              </tr>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                <td class="py-3 font-bold text-amber-600 dark:text-amber-400">computer</td>
+                <td class="py-3 font-bold text-slate-900 dark:text-white">gemma4-computer:latest</td>
+                <td class="py-3 text-slate-400">ollama-launch</td>
+                <td class="py-3 font-sans text-slate-600 dark:text-slate-300">쉘 명령어 실행, 터미널 작업, 파일 관리, 프로세스 점검, git 제어</td>
+              </tr>
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30">
+                <td class="py-3 font-bold text-blue-600 dark:text-blue-400">daily</td>
+                <td class="py-3 font-bold text-slate-900 dark:text-white">gemma4-daily:latest</td>
+                <td class="py-3 text-slate-400">ollama-launch</td>
+                <td class="py-3 font-sans text-slate-600 dark:text-slate-300">텍스트 요약, 번역, 문서 초안 작성, 단순 질의응답 및 데이터 정리</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Ollama config.json Analysis -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div>
+            <span class="rounded bg-purple-50 px-2 py-0.5 font-mono text-xs font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+              ~/.ollama/config.json
+            </span>
+            <h3 class="mt-1 text-sm font-bold text-slate-900 dark:text-white">
+              Ollama Integration Profiles
+            </h3>
+          </div>
+          <span class="text-xs text-slate-400 font-mono">last_selection: "hermes"</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <div class="flex items-center justify-between font-mono text-xs">
+              <span class="font-bold text-slate-900 dark:text-white">hermes</span>
+              <span class="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">onboarded: true</span>
+            </div>
+            <div class="mt-2 text-xs text-slate-500 font-mono">
+              models: <span class="text-indigo-600 dark:text-indigo-400">["gemma4-agent"]</span>
+            </div>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+            <div class="flex items-center justify-between font-mono text-xs">
+              <span class="font-bold text-slate-900 dark:text-white">hermes-desktop</span>
+              <span class="rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">onboarded: true</span>
+            </div>
+            <div class="mt-2 text-xs text-slate-500 font-mono">
+              models: <span class="text-indigo-600 dark:text-indigo-400">["gemma4-agent"]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 4: CLI CHEATSHEET -->
+    <section id="pane-cli" class="tab-pane hidden space-y-4">
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+          자주 사용하는 Ollama & Hermes 터미널 명령어
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          터미널에서 바로 복사하여 실행할 수 있는 핵심 명령어 모음입니다.
+        </p>
+
+        <div class="mt-4 space-y-3 font-mono text-xs">
+          
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+            <div class="flex items-center justify-between text-slate-500 pb-1 text-[11px] font-sans">
+              <span>전체 커스텀 모델 일괄 빌드 및 갱신</span>
+              <button onclick="navigator.clipboard.writeText('bash ~/.ollama/custom_modelfiles/build_models.sh')" class="text-indigo-600 hover:underline">복사</button>
+            </div>
+            <code class="text-slate-800 dark:text-slate-200">bash ~/.ollama/custom_modelfiles/build_models.sh</code>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+            <div class="flex items-center justify-between text-slate-500 pb-1 text-[11px] font-sans">
+              <span>Hermes Agent 실행 (기본 gemma4-agent)</span>
+              <button onclick="navigator.clipboard.writeText('hermes chat')" class="text-indigo-600 hover:underline">복사</button>
+            </div>
+            <code class="text-slate-800 dark:text-slate-200">hermes chat</code>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+            <div class="flex items-center justify-between text-slate-500 pb-1 text-[11px] font-sans">
+              <span>코딩 수석 모델 직접 단발성 질의 (CLI)</span>
+              <button onclick="navigator.clipboard.writeText('ollama run gemma4-coding:latest')" class="text-indigo-600 hover:underline">복사</button>
+            </div>
+            <code class="text-slate-800 dark:text-slate-200">ollama run gemma4-coding:latest</code>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+            <div class="flex items-center justify-between text-slate-500 pb-1 text-[11px] font-sans">
+              <span>VRAM 메모리 상주 모델 확인</span>
+              <button onclick="navigator.clipboard.writeText('curl -s http://127.0.0.1:11434/api/ps | jq .')" class="text-indigo-600 hover:underline">복사</button>
+            </div>
+            <code class="text-slate-800 dark:text-slate-200">curl -s http://127.0.0.1:11434/api/ps | jq .</code>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Script for interactivity -->
+  <script>
+    const fileContents = {
+      agent: `FROM gemma4:26b-a4b
+PARAMETER num_ctx 65536
+PARAMETER num_predict 8192
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER repeat_penalty 1.05
+SYSTEM """당신은 자율형 AI 에이전트 아키텍트입니다.
+도구 호출(Tool-use) 및 JSON 스키마를 엄격히 준수하여 작업을 계획하고 라우팅합니다.
+
+[핵심 작업 규칙]
+- 분석(ANALYSIS.md), 계획(PLAN.md), 구현(IMPLEMENT.md), 검증(TEST.md) 작업 시 프로젝트 root 경로에 해당 마크다운 파일을 생성하거나 업데이트함.
+- 모든 마크다운 문서는 한국어로 작성하며, 항목 사이에 빈 줄(Blank line)이 없는 간결한 불릿 포인트와 명사형 어미(~함, ~임)만 사용함.
+- 문서 및 코드 블록 제목에는 이모지, 볼드체, 번호 매기기를 절대 사용하지 않음."""`,
+
+      coding: `FROM gemma4:26b-a4b
+PARAMETER num_ctx 65536
+PARAMETER num_predict 8192
+PARAMETER temperature 0.2
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER repeat_penalty 1.05
+SYSTEM """당신은 수석 풀스택 및 시스템 소프트웨어 엔지니어입니다.
+TypeScript, React, Next.js, Flutter(Dart), Python, C/C++ 환경에서 최고 수준의 클린 코드와 아키텍처를 설계합니다.
+
+[핵심 작업 규칙]
+- 코드나 프롬프트 작성 시 설정 가능한 변수(Configurable Variables)를 항상 최상단에 배치함.
+- 불필요한 인사말이나 부연 설명을 배제하고 즉시 실행 가능한 완전한 코드 블록을 출력함.
+- 주석이나 문서화 텍스트는 명사형 어미(~함, ~임)로 간결하게 작성함."""`,
+
+      computer: `FROM gemma4:26b-a4b
+PARAMETER num_ctx 65536
+PARAMETER num_predict 4096
+PARAMETER temperature 0.0
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER repeat_penalty 1.05
+SYSTEM """당신은 macOS 및 Linux 시스템 제어, 쉘 스크립팅, CLI 자동화 및 멀티모달 화면 판독 전담 실행 엔진입니다.
+
+[핵심 작업 규칙]
+- 추론 지연을 최소화하고 가장 빠르고 정확한 단일 명령어 또는 Function Call 페이로드를 즉각 반환함.
+- 부가 설명 없이 복사가 편리하도록 무조건 코드 블록만 출력함."""`,
+
+      daily: `FROM gemma4:26b-a4b
+PARAMETER num_ctx 65536
+PARAMETER num_predict 8192
+PARAMETER temperature 0.5
+PARAMETER top_p 0.9
+PARAMETER top_k 64
+PARAMETER repeat_penalty 1.05
+SYSTEM """당신은 한국어 문서 작성, 기술 및 투자 데이터 분석, 번역에 특화된 전문 파트너입니다.
+
+[핵심 작업 규칙]
+- 평소 대화는 딱딱하지 않게 부드러운 '~요'체를 사용하되, 설명이나 요약이 필요할 때는 명사형 어미(~함, ~임)를 사용하여 호흡이 짧은 문장으로 간결하게 정리함.
+- 핵심 키워드는 볼드체 처리하며, 소제목은 이모지나 번호 없이 볼드체만 유지함.
+- 사실과 원시 데이터(Raw Data)에만 기반하여 객관적으로 서술함."""`,
+
+      sh: `#!/usr/bin/env bash
+set -e
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+echo "=== Ollama Custom Models Build Started ==="
+
+echo "1/4 Building gemma4-agent..."
+ollama create gemma4-agent -f "$DIR/Modelfile.agent"
+
+echo "2/4 Building gemma4-coding..."
+ollama create gemma4-coding -f "$DIR/Modelfile.coding"
+
+echo "3/4 Building gemma4-computer..."
+ollama create gemma4-computer -f "$DIR/Modelfile.computer"
+
+echo "4/4 Building gemma4-daily..."
+ollama create gemma4-daily -f "$DIR/Modelfile.daily"
+
+echo "=== All models built and updated successfully! ==="
+ollama list | grep gemma4`
+    };
+
+    let currentFileKey = 'agent';
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.getElementById('pane-' + tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-white', 'text-indigo-600', 'shadow-xs', 'dark:bg-slate-800', 'dark:text-indigo-400');
+        btn.classList.add('text-slate-600', 'dark:text-slate-400');
+      });
+
+      const activeBtn = document.getElementById('tab-btn-' + tabId);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-white', 'text-indigo-600', 'shadow-xs', 'dark:bg-slate-800', 'dark:text-indigo-400');
+        activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+      }
+
+      if (tabId === 'modelfiles') {
+        showFile(currentFileKey);
+      }
+    }
+
+    function showFile(key) {
+      currentFileKey = key;
+      document.getElementById('code-display').textContent = fileContents[key] || '';
+
+      document.querySelectorAll('.file-pill').forEach(btn => {
+        btn.classList.remove('bg-indigo-600', 'text-white');
+        btn.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-300');
+      });
+
+      const activePill = document.getElementById('btn-file-' + key);
+      if (activePill) {
+        activePill.classList.add('bg-indigo-600', 'text-white');
+        activePill.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-300');
+      }
+    }
+
+    function copyCurrentCode() {
+      const code = fileContents[currentFileKey] || '';
+      navigator.clipboard.writeText(code);
+      const textSpan = document.getElementById('copy-text');
+      textSpan.textContent = '✓ 복사됨!';
+      setTimeout(() => {
+        textSpan.textContent = '📋 복사';
+      }, 1500);
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      document.getElementById('theme-icon').textContent = isDark ? '🌙' : '☀️';
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById('context-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Initialize
+    showFile('agent');
+  </script>
+</body>
+</html>
